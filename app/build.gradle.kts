@@ -2,7 +2,9 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("kotlin-parcelize")   // ⬅️ 추가: @Parcelize 사용을 위해 필수
 }
+
 android {
     namespace = "com.example.storagebench"
     compileSdk = 35
