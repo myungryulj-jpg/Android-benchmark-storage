@@ -5,10 +5,6 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-env:
-  ANDROID_SDK_ROOT: ${{ runner.temp }}/android-sdk
-  ANDROID_HOME: ${{ runner.temp }}/android-sdk
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,20 +19,27 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      # 1) cmdline-tools 설치 (PATH 등록은 다음 스텝부터 반영됨)
+      # 1) cmdline-tools 설치 + PATH 등록
       - name: Install Android cmdline-tools
         run: |
+          ANDROID_SDK_ROOT="$HOME/android-sdk"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+
           mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
           curl -L -o tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
           unzip -q tools.zip
           mv cmdline-tools "$ANDROID_SDK_ROOT/cmdline-tools/latest"
+
+          # 다음 스텝부터 PATH 적용
           echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
 
-      # 2) 여기부터 PATH 반영됨 → sdkmanager 사용 가능
+      # 2) 라이선스 동의 (PATH 적용됨)
       - name: Accept SDK licenses
         run: yes | sdkmanager --licenses
 
+      # 3) 필요한 패키지 설치
       - name: Install SDK packages (Platform, Build-Tools, NDK, CMake)
         run: |
           sdkmanager "platform-tools" \
@@ -45,13 +48,14 @@ jobs:
                      "ndk;26.3.11579264" \
                      "cmake;3.22.1"
 
-      # Gradle Wrapper 없이 실행
+      # 4) Gradle Wrapper 없이 빌드
       - name: Build with Gradle (no wrapper)
         uses: gradle/gradle-build-action@v3
         with:
           gradle-version: 8.7
           arguments: assembleDebug
 
+      # 5) APK 산출물 업로드
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
