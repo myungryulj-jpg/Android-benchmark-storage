@@ -1,9 +1,13 @@
-
 pluginManagement {
     repositories {
         gradlePluginPortal()
         google()
         mavenCentral()
+    }
+    plugins {
+        id("com.android.application") version "8.5.2"
+        id("org.jetbrains.kotlin.android") version "1.9.24"
+        // 위 버전은 안정 조합. 필요 시 최신으로 바꿔도 됨.
     }
 }
 dependencyResolutionManagement {
