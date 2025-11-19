@@ -1,1 +1,1 @@
-# Android-benchmark-storage
+# Android Storage Benchmark (Starter)\n\nBuilds with GitHub Actions; outputs app-debug.apk.\n
