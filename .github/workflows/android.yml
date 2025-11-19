@@ -19,7 +19,7 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      # 1) cmdline-tools 설치 + PATH 등록
+      # 1) Android cmdline-tools 설치 및 PATH 등록
       - name: Install Android cmdline-tools
         run: |
           ANDROID_SDK_ROOT="$HOME/android-sdk"
@@ -30,16 +30,13 @@ jobs:
           curl -L -o tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
           unzip -q tools.zip
           mv cmdline-tools "$ANDROID_SDK_ROOT/cmdline-tools/latest"
-
-          # 다음 스텝부터 PATH 적용
           echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
 
-      # 2) 라이선스 동의 (PATH 적용됨)
+      # 2) sdkmanager 사용 (위 스텝 이후 PATH 적용됨)
       - name: Accept SDK licenses
         run: yes | sdkmanager --licenses
 
-      # 3) 필요한 패키지 설치
       - name: Install SDK packages (Platform, Build-Tools, NDK, CMake)
         run: |
           sdkmanager "platform-tools" \
@@ -48,15 +45,23 @@ jobs:
                      "ndk;26.3.11579264" \
                      "cmake;3.22.1"
 
-      # 4) Gradle Wrapper 없이 빌드
-      - name: Build with Gradle (no wrapper)
-        uses: gradle/gradle-build-action@v3
-        with:
-          gradle-version: 8.7
-          arguments: assembleDebug
-          cache-disabled: true # 캐시 완전히 끄기
+      # 3) Gradle 직접 설치(Wrapper 없이)
+      - name: Install Gradle 8.7
+        run: |
+          curl -L -o gradle.zip https://services.gradle.org/distributions/gradle-8.7-bin.zip
+          unzip -q gradle.zip -d $HOME
+          echo "$HOME/gradle-8.7/bin" >> $GITHUB_PATH
 
-      # 5) APK 산출물 업로드
+      - name: Verify tools
+        run: |
+          sdkmanager --version
+          gradle --version
+
+      # 4) 빌드 실행 (Wrapper 없이)
+      - name: Build (assembleDebug)
+        run: gradle --no-daemon --stacktrace assembleDebug
+
+      # 5) APK 업로드
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
